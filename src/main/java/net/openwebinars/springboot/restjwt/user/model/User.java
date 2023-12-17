@@ -77,8 +77,6 @@ public class User implements UserDetails {
     @Builder.Default
     private LocalDateTime lastPasswordChangeAt = LocalDateTime.now();
 
-
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream()

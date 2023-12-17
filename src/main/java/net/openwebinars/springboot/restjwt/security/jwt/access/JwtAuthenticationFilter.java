@@ -72,8 +72,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             resolver.resolveException(request, response, null, ex);
         }
 
-
-
     }
 
     private String getJwtTokenFromRequest(HttpServletRequest request) {
