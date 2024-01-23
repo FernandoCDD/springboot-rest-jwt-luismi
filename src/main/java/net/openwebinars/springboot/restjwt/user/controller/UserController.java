@@ -2,15 +2,12 @@ package net.openwebinars.springboot.restjwt.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import net.openwebinars.springboot.restjwt.security.jwt.access.JwtProvider;
-import net.openwebinars.springboot.restjwt.security.jwt.refresh.RefreshToken;
-import net.openwebinars.springboot.restjwt.security.jwt.refresh.RefreshTokenException;
-import net.openwebinars.springboot.restjwt.security.jwt.refresh.RefreshTokenRequest;
-import net.openwebinars.springboot.restjwt.security.jwt.refresh.RefreshTokenService;
 import net.openwebinars.springboot.restjwt.user.dto.*;
 import net.openwebinars.springboot.restjwt.user.model.User;
 import net.openwebinars.springboot.restjwt.user.service.UserService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,7 +25,6 @@ public class UserController {
     private final UserService userService;
     private final AuthenticationManager authManager;
     private final JwtProvider jwtProvider;
-    private final RefreshTokenService refreshTokenService;
 
 
     @PostMapping("/auth/register")
@@ -69,36 +65,14 @@ public class UserController {
 
         User user = (User) authentication.getPrincipal();
 
-        // Eliminamos el token (si existe) antes de crearlo, ya que cada usuario debería tener solamente un token de refresco simultáneo
-        refreshTokenService.deleteByUser(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(JwtUserResponse.of(user, token, refreshToken.getToken()));
+                .body(JwtUserResponse.of(user, token));
 
 
     }
 
-    @PostMapping("/refreshtoken")
-    public ResponseEntity<?> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest) {
-        String refreshToken = refreshTokenRequest.getRefreshToken();
 
-        return refreshTokenService.findByToken(refreshToken)
-                .map(refreshTokenService::verify)
-                .map(RefreshToken::getUser)
-                .map(user -> {
-                    String token = jwtProvider.generateToken(user);
-                    refreshTokenService.deleteByUser(user);
-                    RefreshToken refreshToken2 = refreshTokenService.createRefreshToken(user);
-                    return ResponseEntity.status(HttpStatus.CREATED)
-                            .body(JwtUserResponse.builder()
-                                    .token(token)
-                                    .refreshToken(refreshToken2.getToken())
-                                    .build());
-                })
-                .orElseThrow(() -> new RefreshTokenException("Refresh token not found"));
-
-    }
 
 
 
@@ -125,6 +99,13 @@ public class UserController {
         }
 
         return null;
+    }
+
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getLoggedUser(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(UserResponse.fromUser(user));
     }
 
 
