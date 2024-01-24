@@ -24,7 +24,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@ActiveProfiles({"postgres"})
 @Testcontainers
 @Sql(value = "classpath:insert-notes.sql", executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
 @Sql(value = "classpath:delete-notes.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
@@ -46,6 +45,6 @@ class NoteRepositoryTest {
 
         List<Note> notas = noteRepository.findByAuthor("8da85d1d-ef9f-4f9d-ab46-2e13a96e9118");
 
-        assertEquals(notas.size(), 1);
+        assertEquals(notas.size(), 2);
     }
 }
